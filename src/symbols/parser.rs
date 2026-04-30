@@ -4,14 +4,14 @@ use chumsky::text::newline;
 use crate::symbols::{Attrs, ObjDataKind, ObjSymbol, ObjSymbolFlag, ObjSymbolKind};
 use crate::util::parsing::{P, parse_dec_or_hex};
 
-pub fn symbols<'a>() -> impl P<'a, Vec<ObjSymbol<'a>>> {
+pub fn symbols<'a>() -> impl P<'a, Vec<ObjSymbol>> {
     symbol_line()
         .repeated()
         .collect::<Vec<_>>()
         .then_ignore(end())
 }
 
-fn symbol_line<'a>() -> impl P<'a, ObjSymbol<'a>> {
+fn symbol_line<'a>() -> impl P<'a, ObjSymbol> {
     name()
         .padded()
         .then_ignore(just('=').padded())
@@ -20,8 +20,8 @@ fn symbol_line<'a>() -> impl P<'a, ObjSymbol<'a>> {
         .then(just("//").padded().ignore_then(attrs()).or_not())
         .then_ignore(newline().or(end()))
         .map(|((name, (section, addr)), attrs)| ObjSymbol {
-            name,
-            section,
+            name: name.into(),
+            section: section.map(<_>::to_owned),
             addr,
             attrs: attrs.unwrap_or_default(),
         })
@@ -31,7 +31,7 @@ fn name<'a>() -> impl P<'a, &'a str> {
     regex(r"[^\s=]+")
 }
 
-fn section_and_addr<'a>() -> impl P<'a, (Option<&'a str>, &'a str)> {
+fn section_and_addr<'a>() -> impl P<'a, (Option<&'a str>, u32)> {
     section().then_ignore(just(':')).or_not().then(addr())
 }
 
@@ -39,8 +39,9 @@ fn section<'a>() -> impl P<'a, &'a str> {
     regex(r"[A-Za-z0-9.]+")
 }
 
-fn addr<'a>() -> impl P<'a, &'a str> {
+fn addr<'a>() -> impl P<'a, u32> {
     regex(r"[0-9A-Fa-fXx]+")
+        .try_map(|value, span| parse_dec_or_hex(value).map_err(|err| Rich::custom(span, err)))
 }
 
 fn attrs<'a>() -> impl P<'a, Attrs> {

@@ -9,22 +9,22 @@ mod parser;
 pub use parser::symbols as parser;
 
 #[derive(Debug, Serialize)]
-pub struct ObjSymbol<'a> {
-    name: &'a str,
-    section: Option<&'a str>,
-    addr: &'a str,
-    attrs: Attrs,
+pub struct ObjSymbol {
+    pub name: String,
+    pub section: Option<String>,
+    pub addr: u32,
+    pub attrs: Attrs,
 }
 
 #[derive(Default, Serialize, Clone, Debug)]
 pub struct Attrs {
-    r#type: ObjSymbolKind,
+    pub r#type: ObjSymbolKind,
     #[serde(serialize_with = "ser_enumset")]
-    flags: EnumSet<ObjSymbolFlag>,
-    size: Option<u32>,
-    data: ObjDataKind,
-    hidden: bool,
-    align: u32,
+    pub flags: EnumSet<ObjSymbolFlag>,
+    pub size: Option<u32>,
+    pub data: ObjDataKind,
+    pub hidden: bool,
+    pub align: u32,
 }
 
 #[derive(Debug, Copy, Clone, Serialize, Default)]
