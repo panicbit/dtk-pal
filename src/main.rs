@@ -1,11 +1,8 @@
-use chumsky::Parser;
 use clap::Parser as _;
 use dtk_pal::cli::{self, Cli};
 use dtk_pal::config::Config;
 use dtk_pal::splits::{File, Split, Splits};
-use dtk_pal::symbols;
 use dtk_pal::symbols::ObjSymbol;
-use dtk_pal::util::parsing;
 use eyre::{Context, ContextCompat, Result, bail};
 use relative_path::RelativePath;
 
@@ -15,21 +12,6 @@ fn main() -> Result<()> {
     match cli {
         Cli::Splits(cli) => main_splits(cli),
     }
-}
-
-fn main_symbols() -> Result<()> {
-    let input = include_str!("../../hidden_mansion_src/config/GLME01/symbols.txt");
-
-    let obj_symbols = match symbols::parser().parse(input).into_result() {
-        Ok(obj_symbols) => obj_symbols,
-        Err(errs) => return parsing::print_errors(&errs, input),
-    };
-
-    let json = serde_json::to_string_pretty(&obj_symbols)?;
-
-    println!("{json}");
-
-    Ok(())
 }
 
 fn main_splits(cli: cli::Splits) -> Result<()> {
